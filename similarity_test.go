@@ -14,20 +14,20 @@ func TestStringSimilarity(t *testing.T) {
 		{
 			name:     "Identical strings",
 			a:        "downloadArtifacts",
-			b:        "downloads the artifacts",
-			expected: 0.6956521739130435,
+			b:        "downloadArtifacts downloads the artifacts",
+			expected: 0.41463414634146345,
 		},
 		{
 			name:     "Similar strings",
 			a:        "getValue",
-			b:        "returns the value",
-			expected: 0.3529411764705882,
+			b:        "getValue returns the value",
+			expected: 0.3076923076923077,
 		},
 		{
 			name:     "Different strings",
 			a:        "Calculate",
-			b:        "Calculate uses a special algorithm to determine the business metric",
-			expected: 0.13432835820895528,
+			b:        "Calculate uses a special algorithm to determine the business metric by taking into account the current state of the system",
+			expected: 0.07377049180327866,
 		},
 	}
 

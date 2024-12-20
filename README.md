@@ -5,7 +5,135 @@ documentation. It allows you to define rules for your codebase with maximum flex
 may require different rules.
 
 The linter is not yet integrated directly into [go-langci-lint](https://golangci-lint.run/), but can be used as
-a [custom plugin](https://golangci-lint.run/plugins/module-plugins/) (see below).
+a [custom plugin](https://golangci-lint.run/plugins/module-plugins/) (see [Usage](#usage)).
+
+## Rules
+
+This chapter demonstrates the rules that can be configured in the `qaway-linter` plugin. The rules are defined in the
+configuration and can be enabled or disabled for specific packages (see [Usage](#usage)).
+
+### Functions: minCommentDensity
+
+A method must have at least `minCommentDensity` of comments (headline + inline) compared to its lines of code. Often
+used in combination with the filter `minLinesOfCode` to exclude small methods from this rule.
+
+Example function for `minCommentDensity: 0.1`:
+
+```go
+func WithoutComments() string {
+string := "Hello, World!"
+return string
+}
+```
+
+Violation: `Method 'WithoutComments' has less than 10% comment density. Actual: 0%`
+
+### Functions: requireHeadlineComment
+
+A headline comment is required for every method. A headline comment is the comment on top of the method.
+
+Example function without headline comment:
+
+```go
+func WithoutHeadlineComment() string {
+// This is an inline comment
+string := "Hello, World!"
+return string
+}
+```
+
+Violation: `Method 'WithoutHeadlineComment' is missing required headline comment`
+
+### Functions: trivialCommentThreshold
+
+Trivial headline comments (similarity to method name) are not allowed.
+The threshold indicates the similarity to the method name.
+A higher threshold indicates a higher required similarity for throwing a violation, resulting in less warnings. A good
+starting point is a value of `0.3`.
+
+Example function with trivial comment:
+
+```go
+// DownloadArtifacts downloads the artifacts
+func DownloadArtifacts() string {
+string := "Hello, World!"
+return string
+}
+```
+
+Violation: `Method 'downloadArtifacts' has a trivial comment. Similarity to method name: 40%`
+
+### Functions: minLoggingDensity
+
+Amount of logging statements compared to lines of code. The rule helps enforcing a minimum amount of logging in certain
+aspects of your codebase.
+
+Example function with low logging density:
+
+```go
+func WithoutLogging() string {
+string := "Hello, World!"
+return string
+}
+```
+
+Violation: `Method 'WithoutLogging' has less than 0% logging density. Actual: 0%`
+
+### Interfaces: requireHeadlineComment
+
+A headline comment is required for every interface.
+
+Example interface without headline comment:
+
+```go
+type WithoutHeadlineComment interface {
+MethodWithoutComment()
+}
+```
+
+Violation: `Interface 'WithoutHeadlineComment' is missing required headline comment`
+
+### Interfaces: requireMethodComment
+
+A comment is required for every method in an interface.
+
+Example interface method without comment:
+
+```go
+type WithoutMethodComment interface {
+MethodWithoutComment()
+}
+```
+
+Violation: `Method 'MethodWithoutComment' is missing required comment`
+
+### Structs: requireHeadlineComment
+
+A headline comment is required for every struct.
+
+Example struct without headline comment:
+
+```go
+type WithoutHeadlineComment struct {
+FieldWithoutComment string
+}
+```
+
+Violation: `Struct 'WithoutHeadlineComment' is missing required headline comment`
+
+### Structs: requireFieldComment
+
+A comment is required for every field in a struct.
+
+Example struct field without comment:
+
+```go
+type WithoutFieldComment struct {
+FieldWithoutComment string
+}
+```
+
+Violation: `Field 'FieldWithoutComment' is missing required comment`
 
 ## Usage
 
@@ -16,8 +144,7 @@ version: v1.62.2 # TODO: update to latest version (see https://github.com/golang
 plugins:
   - module: 'github.com/qaware/qaway-linter'
     import: 'github.com/qaware/qaway-linter'
-    version: v0.0.1 # TODO: use latest version from GitHub 
-
+    version: v0.0.1 # TODO: use latest version from GitHub
 ```
 
 2. Execute `golangci-lint custom` in the same directory to build a custom version of golangci-lint with the
@@ -54,7 +181,7 @@ linter-settings:
                 # Trivial comments (similarity to method name) are not allowed. 
                 # The threshold indicates the similarity to the method name.
                 # A higher threshold indicates a higher similarity, resulting in less warnings.
-                trivialCommentThreshold: 0.5
+                trivialCommentThreshold: 0.3
                 # Amount of logging statements compared to lines of code. 
                 minLoggingDensity: 0.0
             interfaces:

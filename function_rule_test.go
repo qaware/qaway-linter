@@ -22,7 +22,7 @@ func TestFunctionRule(t *testing.T) {
 					Params: FunctionRuleParameters{
 						RequireHeadlineComment:  true,
 						MinCommentDensity:       0.1,
-						TrivialCommentThreshold: 0.5,
+						TrivialCommentThreshold: 0.3,
 						MinLoggingDensity:       0.1,
 					},
 				},

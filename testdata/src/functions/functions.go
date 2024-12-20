@@ -139,8 +139,8 @@ func longMethodWithInlineComments() bool { // want `Method 'longMethodWithInline
 	return false
 }
 
-// downloads the artifacts
-func downloadArtifacts() bool { // want `Method 'downloadArtifacts' has a trivial comment. Similarity to method name: 67%` `Method 'downloadArtifacts' has less than 10% logging density. Actual: 0%`
+// downloadArtifacts downloads the artifacts
+func downloadArtifacts() bool { // want `Method 'downloadArtifacts' has a trivial comment. Similarity to method name: 40%` `Method 'downloadArtifacts' has less than 10% logging density. Actual: 0%`
 	// method has a trivial comment
 	s := "abc"
 	s += "1"
