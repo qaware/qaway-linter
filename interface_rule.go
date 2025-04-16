@@ -24,7 +24,7 @@ type InterfaceRule[ResultType InterfaceRuleResults] struct {
 	Params InterfaceRuleParameters `json:"params"`
 }
 
-func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass, _ *ast.File) bool {
+func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, _ *analysis.Pass, _ *ast.File) bool {
 	n, ok := node.(*ast.GenDecl)
 	if !ok {
 		return false
@@ -40,7 +40,7 @@ func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pa
 	return true
 }
 
-func (i InterfaceRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *ast.File) *InterfaceRuleResults {
+func (i InterfaceRule[ResultType]) Analyse(node ast.Node, _ *analysis.Pass, _ *ast.File) *InterfaceRuleResults {
 	typespec, ok := node.(*ast.GenDecl)
 	if !ok {
 		return nil

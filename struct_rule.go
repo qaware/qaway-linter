@@ -23,7 +23,7 @@ type StructRule[ResultType StructRuleResults] struct {
 	Params StructRuleParameters `json:"params"`
 }
 
-func (i StructRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass, _ *ast.File) bool {
+func (i StructRule[ResultType]) IsApplicable(node ast.Node, _ *analysis.Pass, _ *ast.File) bool {
 	n, ok := node.(*ast.GenDecl)
 	if !ok {
 		return false
@@ -39,7 +39,7 @@ func (i StructRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass,
 	return true
 }
 
-func (i StructRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *ast.File) *StructRuleResults {
+func (i StructRule[ResultType]) Analyse(node ast.Node, _ *analysis.Pass, _ *ast.File) *StructRuleResults {
 	typespec, ok := node.(*ast.GenDecl)
 	if !ok {
 		return nil

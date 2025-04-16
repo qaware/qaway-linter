@@ -63,11 +63,7 @@ func (f FunctionRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pas
 	// the result is cached and the analysis is not executed twice.
 	f.analysisResults = f.Analyse(node, pass, file)
 
-	if f.analysisResults.BodyLinesOfCode < f.Filters.MinLinesOfCode {
-		return false
-	}
-
-	return true
+	return f.analysisResults.BodyLinesOfCode >= f.Filters.MinLinesOfCode
 }
 
 func (f FunctionRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, file *ast.File) *FunctionRuleResults {
@@ -82,7 +78,7 @@ func (f FunctionRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, fi
 	}
 
 	linesInFunction := countLinesInFunction(funcDecl, pass.Fset)
-	linesOfCommentsInMethodBody := countInlineCommentsInFunction(funcDecl, file.Comments, pass.Fset)
+	linesOfCommentsInMethodBody := countInlineCommentsInFunction(funcDecl, file.Comments)
 	loggingStatements := countLoggingStatementsInFunction(funcDecl)
 
 	linesOfHeadlineComments := 0
@@ -148,7 +144,7 @@ func (r FunctionRuleResults) LoggingDensity() float64 {
 // These comments are not returned as part of the AST of a FuncDecl.
 // But all comments within a given file are available in the file's comments.
 // This function determines the number of lines of comment within a method body by checking the comments in the file.
-func countInlineCommentsInFunction(f *ast.FuncDecl, commentsInFile []*ast.CommentGroup, fset *token.FileSet) int {
+func countInlineCommentsInFunction(f *ast.FuncDecl, commentsInFile []*ast.CommentGroup) int {
 	commentLines := 0
 	for _, comment := range commentsInFile {
 		if (comment.Pos() >= f.Pos()) && (comment.End() <= f.End()) {

@@ -31,5 +31,8 @@ func TestFunctionRule(t *testing.T) {
 	}}
 
 	analyzers, err := plugin.BuildAnalyzers()
+	if err != nil {
+		t.Fatalf("Failed to build analyzers: %s", err)
+	}
 	analysistest.Run(t, testdata, analyzers[0], "functions")
 }
