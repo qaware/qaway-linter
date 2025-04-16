@@ -45,7 +45,7 @@ func (i StructRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *a
 		return nil
 	}
 
-	typeComments := countHeadlineComments(typespec.Doc, pass.Fset)
+	typeComments := countHeadlineComments(typespec.Doc)
 
 	var fieldComments = make(map[string]int)
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -55,7 +55,7 @@ func (i StructRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *a
 					if len(field.Names) == 0 {
 						continue
 					}
-					fieldComments[field.Names[0].Name] = countHeadlineComments(field.Doc, pass.Fset)
+					fieldComments[field.Names[0].Name] = countHeadlineComments(field.Doc)
 				}
 			}
 		}

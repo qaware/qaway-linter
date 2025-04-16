@@ -9,3 +9,8 @@ type TestWithoutComment struct { // want `Struct 'TestWithoutComment' is missing
 	// Comment
 	MethodWithComment string
 }
+
+//
+//nolint:qawaylinter
+type TestWithEmptyCommentAndDirective struct { // want `Struct 'TestWithEmptyCommentAndDirective' is missing required headline comment`
+}

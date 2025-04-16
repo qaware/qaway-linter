@@ -16,3 +16,11 @@ type TestWithComments interface {
 	// Comment
 	Method() bool
 }
+
+//
+//nolint:qawaylinter
+type TestWithEmptyCommentAndDirective interface { // want `Interface 'TestWithEmptyCommentAndDirective' is missing required headline comment` `Method 'Method' is missing required comment`
+	//
+	//nolint:qawaylinter
+	Method() bool
+}

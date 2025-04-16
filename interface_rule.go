@@ -2,8 +2,8 @@ package qawaylinter
 
 import (
 	"go/ast"
-	"go/token"
 	"golang.org/x/tools/go/analysis"
+	"strings"
 )
 
 type InterfaceRuleParameters struct {
@@ -46,13 +46,13 @@ func (i InterfaceRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _
 		return nil
 	}
 
-	typeComments := countHeadlineComments(typespec.Doc, pass.Fset)
+	typeComments := countHeadlineComments(typespec.Doc)
 
 	var methodComments = make(map[string]int)
 	ast.Inspect(node, func(n ast.Node) bool {
 		if field, ok := n.(*ast.Field); ok {
 			if _, ok := field.Type.(*ast.FuncType); ok {
-				methodComments[field.Names[0].Name] = countHeadlineComments(field.Doc, pass.Fset)
+				methodComments[field.Names[0].Name] = countHeadlineComments(field.Doc)
 			}
 		}
 		return true
@@ -64,13 +64,13 @@ func (i InterfaceRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _
 	}
 }
 
-func countHeadlineComments(comments *ast.CommentGroup, fset *token.FileSet) int {
+func countHeadlineComments(comments *ast.CommentGroup) int {
 	if comments == nil {
 		return 0
 	}
-	start := fset.Position(comments.Pos()).Line
-	end := fset.Position(comments.End()).Line
-	return end - start + 1
+	// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
+	rawCommentText := comments.Text()
+	return strings.Count(rawCommentText, "\n")
 }
 
 func (i InterfaceRule[ResultType]) Apply(analysis *InterfaceRuleResults, node ast.Node, pass *analysis.Pass) {

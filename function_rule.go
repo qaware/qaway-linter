@@ -87,7 +87,7 @@ func (f FunctionRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, fi
 
 	linesOfHeadlineComments := 0
 	if funcDecl.Doc != nil {
-		linesOfHeadlineComments = countCommentLines(funcDecl.Doc, pass.Fset)
+		linesOfHeadlineComments = countCommentLines(funcDecl.Doc)
 	}
 
 	commentSimilarity := StringSimilarity(funcDecl.Name.Name, funcDecl.Doc.Text())
@@ -152,7 +152,7 @@ func countInlineCommentsInFunction(f *ast.FuncDecl, commentsInFile []*ast.Commen
 	commentLines := 0
 	for _, comment := range commentsInFile {
 		if (comment.Pos() >= f.Pos()) && (comment.End() <= f.End()) {
-			commentLines += countCommentLines(comment, fset)
+			commentLines += countCommentLines(comment)
 		}
 	}
 	return commentLines
@@ -249,21 +249,21 @@ func countMeaningfulLines(source string) int {
 // countCommentLines counts the lines covered by comments in a given AST node.
 // This method takes into account that a command can span multiple lines using the /* */ syntax.
 // It can count the number of comments in both the headline and within a method's body.
-func countCommentLines(node ast.Node, fset *token.FileSet) int {
+func countCommentLines(node ast.Node) int {
 	commentLines := 0
 
 	// Traverse the node to find all comment groups
 	ast.Inspect(node, func(n ast.Node) bool {
 		if commentGroup, ok := n.(*ast.CommentGroup); ok {
-			for _, comment := range commentGroup.List {
-				if strings.HasPrefix(comment.Text, "// want `") {
+			// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
+			rawCommentText := commentGroup.Text()
+			for comment := range strings.Lines(rawCommentText) {
+				if strings.HasPrefix(comment, "want `") {
 					// filter comments that are used for testing as these comments for analysistest
 					// would otherwise increase the logging density.
 					continue
 				}
-				start := fset.Position(comment.Pos()).Line
-				end := fset.Position(comment.End()).Line
-				commentLines += end - start + 1
+				commentLines += +1
 			}
 		}
 		return true
