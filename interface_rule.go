@@ -65,12 +65,20 @@ func (i InterfaceRule[ResultType]) Analyse(node ast.Node, _ *analysis.Pass, _ *a
 }
 
 func countHeadlineComments(comments *ast.CommentGroup) int {
+	commentLines := 0
 	if comments == nil {
-		return 0
+		return commentLines
 	}
 	// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
 	rawCommentText := comments.Text()
-	return strings.Count(rawCommentText, "\n")
+
+	for comment := range strings.Lines(rawCommentText) {
+		if isFilteredComment(comment) {
+			continue
+		}
+		commentLines++
+	}
+	return commentLines
 }
 
 func (i InterfaceRule[ResultType]) Apply(analysis *InterfaceRuleResults, node ast.Node, pass *analysis.Pass) {

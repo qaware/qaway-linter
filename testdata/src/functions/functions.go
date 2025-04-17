@@ -228,3 +228,8 @@ func methodWithEmptyComments() bool { // want `Method 'methodWithEmptyComments' 
 	log.Printf("Hello World")
 	return false
 }
+
+// TODO: should not count
+func filterOutTodoComments() bool { // want `Method 'filterOutTodoComments' is missing required headline comment` `Method 'filterOutTodoComments' has less than 10% comment density. Actual: 0%` `Method 'filterOutTodoComments' has less than 10% logging density. Actual: 0%`
+	return true
+}

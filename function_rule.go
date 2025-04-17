@@ -17,6 +17,12 @@ var loggerPattern = regexp.MustCompile("(?i)(log|logger)")
 // the method pattern also covers calls like Printf etc. as (?i)print also matches Printf.
 var loggerMethodPattern = regexp.MustCompile("(?i)(debug|info|warn|error|fatal|print|panic|trace|log)")
 
+// prefix filters for comments
+var commentPrefixFilters = []string{
+	"want `", // filter comments that are used for testing as these comments for analysistest would otherwise increase the logging density.
+	"TODO",   // filter out to-do comments
+}
+
 type FunctionFilters struct {
 	// MinLinesOfCode determines the minimum number of lines of code that a function must have to be considered.
 	MinLinesOfCode int `json:"minLinesOfCode"`
@@ -254,9 +260,7 @@ func countCommentLines(node ast.Node) int {
 			// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
 			rawCommentText := commentGroup.Text()
 			for comment := range strings.Lines(rawCommentText) {
-				if strings.HasPrefix(comment, "want `") {
-					// filter comments that are used for testing as these comments for analysistest
-					// would otherwise increase the logging density.
+				if isFilteredComment(comment) {
 					continue
 				}
 				commentLines += +1
@@ -266,4 +270,17 @@ func countCommentLines(node ast.Node) int {
 	})
 
 	return commentLines
+}
+
+// Method takes a comment and checks if it should be filtered
+// Currently, checks if the comment starts with given prefixes
+func isFilteredComment(comment string) bool {
+	isFiltered := false
+	for _, prefixFilter := range commentPrefixFilters {
+		if strings.HasPrefix(strings.ToLower(comment), strings.ToLower(prefixFilter)) {
+			// filter comments by comparing with given prefix, using both their lowercase version
+			isFiltered = true
+		}
+	}
+	return isFiltered
 }

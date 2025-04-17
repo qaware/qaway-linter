@@ -6,6 +6,11 @@ type TestWithoutComments interface { // want `Interface 'TestWithoutComments' is
 	Method() bool
 }
 
+// TODO: should not count
+type TestWithTodoComment interface { // want `Interface 'TestWithTodoComment' is missing required headline comment`
+
+}
+
 // This has a sample comment
 type TestWithHeadlineComments interface { // want `Method 'Method' is missing required comment`
 	Method() bool
