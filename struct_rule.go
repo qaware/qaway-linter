@@ -23,7 +23,7 @@ type StructRule[ResultType StructRuleResults] struct {
 	Params StructRuleParameters `json:"params"`
 }
 
-func (i StructRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass, _ *ast.File) bool {
+func (i StructRule[ResultType]) IsApplicable(node ast.Node, _ *analysis.Pass, _ *ast.File) bool {
 	n, ok := node.(*ast.GenDecl)
 	if !ok {
 		return false
@@ -39,13 +39,13 @@ func (i StructRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass,
 	return true
 }
 
-func (i StructRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *ast.File) *StructRuleResults {
+func (i StructRule[ResultType]) Analyse(node ast.Node, _ *analysis.Pass, _ *ast.File) *StructRuleResults {
 	typespec, ok := node.(*ast.GenDecl)
 	if !ok {
 		return nil
 	}
 
-	typeComments := countHeadlineComments(typespec.Doc, pass.Fset)
+	typeComments := countHeadlineComments(typespec.Doc)
 
 	var fieldComments = make(map[string]int)
 	ast.Inspect(node, func(n ast.Node) bool {
@@ -55,7 +55,7 @@ func (i StructRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *a
 					if len(field.Names) == 0 {
 						continue
 					}
-					fieldComments[field.Names[0].Name] = countHeadlineComments(field.Doc, pass.Fset)
+					fieldComments[field.Names[0].Name] = countHeadlineComments(field.Doc)
 				}
 			}
 		}

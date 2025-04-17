@@ -17,6 +17,12 @@ var loggerPattern = regexp.MustCompile("(?i)(log|logger)")
 // the method pattern also covers calls like Printf etc. as (?i)print also matches Printf.
 var loggerMethodPattern = regexp.MustCompile("(?i)(debug|info|warn|error|fatal|print|panic|trace|log)")
 
+// prefix filters for comments
+var commentPrefixFilters = []string{
+	"want `", // filter comments that are used for testing as these comments for analysistest would otherwise increase the logging density.
+	"TODO",   // filter out to-do comments
+}
+
 type FunctionFilters struct {
 	// MinLinesOfCode determines the minimum number of lines of code that a function must have to be considered.
 	MinLinesOfCode int `json:"minLinesOfCode"`
@@ -63,11 +69,7 @@ func (f FunctionRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pas
 	// the result is cached and the analysis is not executed twice.
 	f.analysisResults = f.Analyse(node, pass, file)
 
-	if f.analysisResults.BodyLinesOfCode < f.Filters.MinLinesOfCode {
-		return false
-	}
-
-	return true
+	return f.analysisResults.BodyLinesOfCode >= f.Filters.MinLinesOfCode
 }
 
 func (f FunctionRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, file *ast.File) *FunctionRuleResults {
@@ -82,12 +84,12 @@ func (f FunctionRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, fi
 	}
 
 	linesInFunction := countLinesInFunction(funcDecl, pass.Fset)
-	linesOfCommentsInMethodBody := countInlineCommentsInFunction(funcDecl, file.Comments, pass.Fset)
+	linesOfCommentsInMethodBody := countInlineCommentsInFunction(funcDecl, file.Comments)
 	loggingStatements := countLoggingStatementsInFunction(funcDecl)
 
 	linesOfHeadlineComments := 0
 	if funcDecl.Doc != nil {
-		linesOfHeadlineComments = countCommentLines(funcDecl.Doc, pass.Fset)
+		linesOfHeadlineComments = countCommentLines(funcDecl.Doc)
 	}
 
 	commentSimilarity := StringSimilarity(funcDecl.Name.Name, funcDecl.Doc.Text())
@@ -148,11 +150,11 @@ func (r FunctionRuleResults) LoggingDensity() float64 {
 // These comments are not returned as part of the AST of a FuncDecl.
 // But all comments within a given file are available in the file's comments.
 // This function determines the number of lines of comment within a method body by checking the comments in the file.
-func countInlineCommentsInFunction(f *ast.FuncDecl, commentsInFile []*ast.CommentGroup, fset *token.FileSet) int {
+func countInlineCommentsInFunction(f *ast.FuncDecl, commentsInFile []*ast.CommentGroup) int {
 	commentLines := 0
 	for _, comment := range commentsInFile {
 		if (comment.Pos() >= f.Pos()) && (comment.End() <= f.End()) {
-			commentLines += countCommentLines(comment, fset)
+			commentLines += countCommentLines(comment)
 		}
 	}
 	return commentLines
@@ -249,25 +251,36 @@ func countMeaningfulLines(source string) int {
 // countCommentLines counts the lines covered by comments in a given AST node.
 // This method takes into account that a command can span multiple lines using the /* */ syntax.
 // It can count the number of comments in both the headline and within a method's body.
-func countCommentLines(node ast.Node, fset *token.FileSet) int {
+func countCommentLines(node ast.Node) int {
 	commentLines := 0
 
 	// Traverse the node to find all comment groups
 	ast.Inspect(node, func(n ast.Node) bool {
 		if commentGroup, ok := n.(*ast.CommentGroup); ok {
-			for _, comment := range commentGroup.List {
-				if strings.HasPrefix(comment.Text, "// want `") {
-					// filter comments that are used for testing as these comments for analysistest
-					// would otherwise increase the logging density.
+			// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
+			rawCommentText := commentGroup.Text()
+			for comment := range strings.Lines(rawCommentText) {
+				if isFilteredComment(comment) {
 					continue
 				}
-				start := fset.Position(comment.Pos()).Line
-				end := fset.Position(comment.End()).Line
-				commentLines += end - start + 1
+				commentLines += +1
 			}
 		}
 		return true
 	})
 
 	return commentLines
+}
+
+// Method takes a comment and checks if it should be filtered
+// Currently, checks if the comment starts with given prefixes
+func isFilteredComment(comment string) bool {
+	isFiltered := false
+	for _, prefixFilter := range commentPrefixFilters {
+		if strings.HasPrefix(strings.ToLower(comment), strings.ToLower(prefixFilter)) {
+			// filter comments by comparing with given prefix, using both their lowercase version
+			isFiltered = true
+		}
+	}
+	return isFiltered
 }

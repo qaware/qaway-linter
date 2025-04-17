@@ -197,3 +197,39 @@ func perfectMethod() bool {
 	log.Printf("Hello World")
 	return false
 }
+
+// Comment 1
+//
+//nolint:qawaylinter
+func methodWithEmptyComments() bool { // want `Method 'methodWithEmptyComments' has less than 10% comment density. Actual: 6%`
+	log.Printf("Hello World")
+
+	s := "abc"
+	s += "1"
+
+	if s == "" {
+		return true
+	}
+
+	s += "2"
+	if s == "" {
+		return true
+	}
+
+	s += "3"
+	if s == "" {
+		return true
+	}
+
+	s += "4"
+	if s == "" {
+		return true
+	}
+	log.Printf("Hello World")
+	return false
+}
+
+// TODO: should not count
+func filterOutTodoComments() bool { // want `Method 'filterOutTodoComments' is missing required headline comment` `Method 'filterOutTodoComments' has less than 10% comment density. Actual: 0%` `Method 'filterOutTodoComments' has less than 10% logging density. Actual: 0%`
+	return true
+}

@@ -9,3 +9,13 @@ type TestWithoutComment struct { // want `Struct 'TestWithoutComment' is missing
 	// Comment
 	MethodWithComment string
 }
+
+// TODO: should not count
+type TestWithTodoComment struct { // want `Struct 'TestWithTodoComment' is missing required headline comment`
+
+}
+
+//
+//nolint:qawaylinter
+type TestWithEmptyCommentAndDirective struct { // want `Struct 'TestWithEmptyCommentAndDirective' is missing required headline comment`
+}

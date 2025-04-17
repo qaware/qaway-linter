@@ -2,8 +2,8 @@ package qawaylinter
 
 import (
 	"go/ast"
-	"go/token"
 	"golang.org/x/tools/go/analysis"
+	"strings"
 )
 
 type InterfaceRuleParameters struct {
@@ -24,7 +24,7 @@ type InterfaceRule[ResultType InterfaceRuleResults] struct {
 	Params InterfaceRuleParameters `json:"params"`
 }
 
-func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pass, _ *ast.File) bool {
+func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, _ *analysis.Pass, _ *ast.File) bool {
 	n, ok := node.(*ast.GenDecl)
 	if !ok {
 		return false
@@ -40,19 +40,19 @@ func (i InterfaceRule[ResultType]) IsApplicable(node ast.Node, pass *analysis.Pa
 	return true
 }
 
-func (i InterfaceRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _ *ast.File) *InterfaceRuleResults {
+func (i InterfaceRule[ResultType]) Analyse(node ast.Node, _ *analysis.Pass, _ *ast.File) *InterfaceRuleResults {
 	typespec, ok := node.(*ast.GenDecl)
 	if !ok {
 		return nil
 	}
 
-	typeComments := countHeadlineComments(typespec.Doc, pass.Fset)
+	typeComments := countHeadlineComments(typespec.Doc)
 
 	var methodComments = make(map[string]int)
 	ast.Inspect(node, func(n ast.Node) bool {
 		if field, ok := n.(*ast.Field); ok {
 			if _, ok := field.Type.(*ast.FuncType); ok {
-				methodComments[field.Names[0].Name] = countHeadlineComments(field.Doc, pass.Fset)
+				methodComments[field.Names[0].Name] = countHeadlineComments(field.Doc)
 			}
 		}
 		return true
@@ -64,13 +64,21 @@ func (i InterfaceRule[ResultType]) Analyse(node ast.Node, pass *analysis.Pass, _
 	}
 }
 
-func countHeadlineComments(comments *ast.CommentGroup, fset *token.FileSet) int {
+func countHeadlineComments(comments *ast.CommentGroup) int {
+	commentLines := 0
 	if comments == nil {
-		return 0
+		return commentLines
 	}
-	start := fset.Position(comments.Pos()).Line
-	end := fset.Position(comments.End()).Line
-	return end - start + 1
+	// rawCommentText contains the comment text without comment markers, empty lines and comment directives (like //nolint or //line) but still contains new lines for counting lines
+	rawCommentText := comments.Text()
+
+	for comment := range strings.Lines(rawCommentText) {
+		if isFilteredComment(comment) {
+			continue
+		}
+		commentLines++
+	}
+	return commentLines
 }
 
 func (i InterfaceRule[ResultType]) Apply(analysis *InterfaceRuleResults, node ast.Node, pass *analysis.Pass) {
